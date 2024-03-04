@@ -2,17 +2,35 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smart_pay/appTheme.dart';
 
-class Onboarding extends StatelessWidget {
+final currentIndex = StateProvider<int>((ref) => 0);
+final positionIndex = StateProvider<int>((ref) => 0);
+
+class Onboarding extends ConsumerWidget {
   Onboarding({super.key});
 
   final _controller = PageController();
+  final List<OnboardingPage> _pages = [
+    OnboardingPage(
+      text: 'Finance app the safest\nand most trusted',
+      imageUrl: 'assets/onboarding1.png',
+      subtext:
+          'Your finance work starts here. Our here to help\nyou track and deal with speeding up your\ntransactions.',
+    ),
+    OnboardingPage(
+      text: 'The fastest transaction\nprocess only here',
+      imageUrl: 'assets/onboarding2.png',
+      subtext:
+          'Get easy to pay all your bills with just a few\nsteps. Paying your bills become fast and\nefficient.',
+    ),
+  ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -42,30 +60,55 @@ class Onboarding extends StatelessWidget {
               ],
             ),
             PageView(
+              onPageChanged: (index) {
+                ref.read(currentIndex.notifier).state = index;
+              },
               allowImplicitScrolling: true,
               physics: AlwaysScrollableScrollPhysics(),
               scrollDirection: Axis.horizontal,
               controller: _controller,
-              children: [
-                AppOnboarding(text: 'Finance app the safest\nand most trusted', imageUrl: 'assets/onboarding1.png', subtext: 'Your finance work starts here. Our here to help\nyou track and deal with speeding up your\ntransactions.' ,),
-                AppOnboarding(text: 'Finance app the safest\nand most trusted', imageUrl: 'assets/onboarding1.png', subtext: 'Your finance work starts here. Our here to help\nyou track and deal with speeding up your\ntransactions.' ,)
-              ],
+              children:
+                  _pages.map((page) => AppOnboarding(pageInfo: page)).toList(),
             ),
             Positioned(
               bottom: 24.h,
-              child: SizedBox(
-                height: 56.h,
-                width: 287.w,
-                child: ElevatedButton(onPressed: (){},style: ElevatedButton.styleFrom(
-                  elevation: 0,
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.r),
+              child: Column(
+                children: [
+                  Row(
+                    children: List.generate(
+                      _pages.length,
+                      (index) => OnboardingIndicator(
+                        positionIndex: index,
+                        currentIndex: currentIndex,
+                      ),
+                    ),
                   ),
-                ), child: Text(
-                  'Get Started',
-                  style: Theme.of(context).textTheme.displayMedium!.copyWith(color: Colors.white),
-                )),
+                  SizedBox(
+                    height: 34.h,
+                  ),
+                  SizedBox(
+                    height: 56.h,
+                    width: 287.w,
+                    child: ElevatedButton(
+                        onPressed: () {
+                          // Navigator.of(context).pu
+                        },
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                        child: Text(
+                          'Get Started',
+                          style: Theme.of(context)
+                              .textTheme
+                              .displayMedium!
+                              .copyWith(color: Colors.white),
+                        )),
+                  ),
+                ],
               ),
             )
           ],
@@ -77,16 +120,11 @@ class Onboarding extends StatelessWidget {
 
 class AppOnboarding extends StatelessWidget {
   AppOnboarding({
-    required this.text,
-    required this.imageUrl,
-    required this.subtext,
+    required this.pageInfo,
     super.key,
   });
 
-  String text;
-  String subtext;
-  String imageUrl;
-
+  final OnboardingPage pageInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +152,7 @@ class AppOnboarding extends StatelessWidget {
                   ),
                 ),
                 child: Image.asset(
-                  imageUrl,
+                  pageInfo.imageUrl,
                   height: 407.26.h,
                   width: 202.68.w,
                 ),
@@ -124,7 +162,7 @@ class AppOnboarding extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        text,
+                        pageInfo.text,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.displayLarge,
                       ),
@@ -132,11 +170,13 @@ class AppOnboarding extends StatelessWidget {
                         height: 16.h,
                       ),
                       Text(
-                          subtext,
+                        pageInfo.subtext,
                         textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.displaySmall,),
-                      SizedBox(height: 16.h,),
-                      OnboardingIndicator(positionIndex: 0, currentIndex: 0,),
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                      SizedBox(
+                        height: 16.h,
+                      ),
                     ],
                   )),
             ],
@@ -149,35 +189,42 @@ class AppOnboarding extends StatelessWidget {
   }
 }
 
-class OnboardingIndicator extends StatelessWidget {
+class OnboardingIndicator extends ConsumerWidget {
   OnboardingIndicator({
-    super.key, required this.positionIndex, required this.currentIndex,
+    super.key,
+    required this.positionIndex,
+    required this.currentIndex,
   });
 
-  final int positionIndex, currentIndex;
+  final int positionIndex;
+  final StateProvider currentIndex;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, ref) {
     return Row(
       children: [
         Container(
-          width: positionIndex == currentIndex ? 32.w : 6.h,
+          width: positionIndex == ref.watch(currentIndex) ? 32.w : 6.h,
           height: 6.h,
           decoration: BoxDecoration(
-            color: Colors.black,
-            borderRadius: BorderRadius.circular(500.r)
-          ),
+              color: positionIndex == ref.watch(currentIndex)
+                  ? Colors.black
+                  : Color(0xffE5E7EB),
+              borderRadius: BorderRadius.circular(500.r)),
         ),
-        SizedBox(width: 4.w,),
-        Container(
-          height: 6.h,
-          width: 6.h,
-          decoration: BoxDecoration(
-            color: Color(0xffE5E7EB),
-            borderRadius: BorderRadius.circular(100.r)
-          ),
-        )
       ],
     );
   }
+}
+
+class OnboardingPage {
+  final String text;
+  final String imageUrl;
+  final String subtext;
+
+  OnboardingPage({
+    required this.text,
+    required this.imageUrl,
+    required this.subtext,
+  });
 }
