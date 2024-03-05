@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smart_pay/appTheme.dart';
+import 'package:smart_pay/screens/sign_in.dart';
+
+import '../widgets/widgets.dart';
 
 final currentIndex = StateProvider<int>((ref) => 0);
 final positionIndex = StateProvider<int>((ref) => 0);
@@ -45,12 +48,16 @@ class Onboarding extends ConsumerWidget {
                   padding: EdgeInsets.symmetric(horizontal: 24.w),
                   child: Align(
                     alignment: Alignment.topRight,
-                    child: Text(
-                      'Skip',
-                      style: Theme.of(context)
-                          .textTheme
-                          .displayMedium!
-                          .copyWith(color: primaryAppColor),
+                    child: GestureDetector(
+
+                      onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (context)=> SignIn())),
+                      child: Text(
+                        'Skip',
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayMedium!
+                            .copyWith(color: lightGreen),
+                      ),
                     ),
                   ),
                 ),
@@ -86,28 +93,7 @@ class Onboarding extends ConsumerWidget {
                   SizedBox(
                     height: 34.h,
                   ),
-                  SizedBox(
-                    height: 56.h,
-                    width: 287.w,
-                    child: ElevatedButton(
-                        onPressed: () {
-                          // Navigator.of(context).pu
-                        },
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0,
-                          backgroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
-                        ),
-                        child: Text(
-                          'Get Started',
-                          style: Theme.of(context)
-                              .textTheme
-                              .displayMedium!
-                              .copyWith(color: Colors.white),
-                        )),
-                  ),
+                  AppButton(text: 'Get Started', onPressed: () { Navigator.of(context).push(MaterialPageRoute(builder: (context)=> SignIn())); }, width: 287,),
                 ],
               ),
             )
@@ -117,6 +103,8 @@ class Onboarding extends ConsumerWidget {
     );
   }
 }
+
+
 
 class AppOnboarding extends StatelessWidget {
   AppOnboarding({
@@ -189,33 +177,7 @@ class AppOnboarding extends StatelessWidget {
   }
 }
 
-class OnboardingIndicator extends ConsumerWidget {
-  OnboardingIndicator({
-    super.key,
-    required this.positionIndex,
-    required this.currentIndex,
-  });
 
-  final int positionIndex;
-  final StateProvider currentIndex;
-
-  @override
-  Widget build(BuildContext context, ref) {
-    return Row(
-      children: [
-        Container(
-          width: positionIndex == ref.watch(currentIndex) ? 32.w : 6.h,
-          height: 6.h,
-          decoration: BoxDecoration(
-              color: positionIndex == ref.watch(currentIndex)
-                  ? Colors.black
-                  : Color(0xffE5E7EB),
-              borderRadius: BorderRadius.circular(500.r)),
-        ),
-      ],
-    );
-  }
-}
 
 class OnboardingPage {
   final String text;
