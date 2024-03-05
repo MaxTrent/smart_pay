@@ -13,13 +13,21 @@ class AppTextField extends ConsumerWidget {
     required this.keyboardType,
     this.suffixIcon,
     this.obscureText,
+    this.readOnly = false,
+    this.onTap,
+    this.prefixIcon,
+    this.showCursor = true
   });
 
   final TextEditingController controller;
   String hintText;
   TextInputType keyboardType;
   Widget? suffixIcon;
+  Widget? prefixIcon;
   bool? obscureText;
+  bool readOnly;
+  Function()? onTap;
+  bool showCursor;
 
   // GlobalKey<FormState> formKey;
 
@@ -29,17 +37,19 @@ class AppTextField extends ConsumerWidget {
       height: 56.h,
       child: TextFormField(
         // key: formKey,
+        readOnly: readOnly,
         obscureText: obscureText ?? false,
         textAlignVertical: TextAlignVertical.bottom,
         cursorHeight: 20.h,
         cursorWidth: 1.w,
+        onTap: onTap,
         style: Theme.of(context).textTheme.displayMedium,
         validator: (value) {
           if (!value!.isValidEmail) {
             return;
           }
         },
-        showCursor: true,
+        showCursor: showCursor,
         cursorColor: buttonColor,
         onChanged: (value) {
           if (value.isNotEmpty) {
@@ -49,6 +59,7 @@ class AppTextField extends ConsumerWidget {
         autovalidateMode: AutovalidateMode.onUserInteraction,
         controller: controller,
         decoration: InputDecoration(
+          prefixIcon: prefixIcon,
           suffixIcon: suffixIcon,
           hintText: hintText,
           hintStyle: Theme.of(context)
