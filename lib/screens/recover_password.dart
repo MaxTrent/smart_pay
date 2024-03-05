@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:smart_pay/appTheme.dart';
+import 'package:smart_pay/app_theme.dart';
 import 'package:smart_pay/screens/screens.dart';
 import 'package:smart_pay/widgets/app_button.dart';
 import 'package:smart_pay/widgets/app_textfield.dart';

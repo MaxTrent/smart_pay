@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:smart_pay/appTheme.dart';
+import 'package:smart_pay/app_theme.dart';
 import 'package:smart_pay/screens/sign_in.dart';
 
 import '../widgets/widgets.dart';

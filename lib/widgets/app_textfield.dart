@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:smart_pay/validators.dart';
 
-import '../appTheme.dart';
+import '../app_theme.dart';
 
 class AppTextField extends ConsumerWidget {
   AppTextField({
@@ -55,6 +55,7 @@ class AppTextField extends ConsumerWidget {
               .textTheme
               .displayMedium!
               .copyWith(fontWeight: FontWeight.w400, color: Color(0xff9CA3AF)),
+          filled: true,
           fillColor: textFieldColor,
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16.r),
@@ -63,6 +64,7 @@ class AppTextField extends ConsumerWidget {
             ),
           ),
           enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16.r),
             borderSide: BorderSide.none,
           ),
         ),

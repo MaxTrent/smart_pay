@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 const lightGreen = Color(0xff2FA2B9);
 const darkGreen = Color(0xff0A6375);
