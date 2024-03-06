@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,23 +13,43 @@ import 'package:smart_pay/widgets/app_button.dart';
 
 import '../app_theme.dart';
 
+
+
+final startTimeProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
+
 final submitButtonColorProvider =
     StateProvider<Color>((ref) => buttonColor.withOpacity(0.7));
+
+final otpControllersProvider =
+Provider.family<TextEditingController, int>((ref, id) {
+  return TextEditingController();
+});
 
 class VerifySignUp extends ConsumerWidget {
   VerifySignUp({super.key});
 
   final _formKey = GlobalKey<FormState>();
+  final _countdownStreamProvider = StreamProvider<int>(
+        (ref) => Stream.periodic(Duration(seconds: 1), (_) => max(0, 30 - DateTime.now().difference(ref.watch(startTimeProvider)).inSeconds))
+        .handleError((error) => 0),
+  );
 
-  final otpControllersProvider =
-      Provider.family<TextEditingController, int>((ref, id) {
-    return TextEditingController();
-  });
+  final otpProvider = StateProvider<String>((ref) => '');
 
   final enableButton = StateProvider((ref) => false);
 
+
+
   @override
   Widget build(BuildContext context, ref) {
+
+
+    final otpControllers = List.generate(5, (i) => ref.watch(otpControllersProvider(i)));
+    final remainingSeconds = ref.watch(_countdownStreamProvider);
+
+
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -34,13 +57,8 @@ class VerifySignUp extends ConsumerWidget {
             child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.w),
           child: Form(
-            key: _formKey,
-            onChanged: () {
-              ref.read(submitButtonColorProvider.notifier).state =
-                  _formKey.currentState!.validate()
-                      ? buttonColor
-                      : buttonColor.withOpacity(0.7);
-            },
+            // key: _formKey,
+
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               SizedBox(
@@ -98,17 +116,16 @@ class VerifySignUp extends ConsumerWidget {
                     AppOtpField(
                       controller: ref.watch(otpControllersProvider(i)),
                       onChanged: (value) {
-                        if (value!.isNotEmpty) {
+                        if (value.isNotEmpty) {
                           if (i < 4) {
                             FocusScope.of(context).nextFocus();
-                          } else {
-                            // Focus is on the last field, submit or perform desired action
                           }
                         } else {
                           if (i > 0) {
                             FocusScope.of(context).previousFocus();
                           }
                         }
+                        ref.read(enableButton.notifier).state = otpControllers.every((controller) => controller.text.isNotEmpty);
                       },
                     ),
                 ],
@@ -118,7 +135,7 @@ class VerifySignUp extends ConsumerWidget {
               ),
               Center(
                 child: Text(
-                  'Resend Code 30 secs',
+                  'Resend Code ${remainingSeconds.value} secs',
                   style: Theme.of(context).textTheme.displayMedium!.copyWith(
                       fontWeight: FontWeight.w700, color: Color(0xff727272)),
                 ),
@@ -128,12 +145,12 @@ class VerifySignUp extends ConsumerWidget {
               ),
               AppButton(
                 text: 'Continue',
-                onPressed: () {
-                  Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => UserInfo()));
+                onPressed: () {ref.watch(enableButton)?
+                Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => UserInfo())): null;
                 },
                 width: 327,
-                backgroundColor: ref.watch(submitButtonColorProvider),
+                backgroundColor: ref.watch(enableButton) ? buttonColor : ref.watch(submitButtonColorProvider),
               )
             ]),
           ),
@@ -141,7 +158,10 @@ class VerifySignUp extends ConsumerWidget {
       ),
     );
   }
+
+
 }
+
 
 class AppOtpField extends StatelessWidget {
   AppOtpField({
@@ -151,7 +171,7 @@ class AppOtpField extends StatelessWidget {
   });
 
   TextEditingController controller;
-  Function(String?) onChanged;
+  Function(String)? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -162,7 +182,10 @@ class AppOtpField extends StatelessWidget {
         // key: formKey,
         // autofocus: true,
         // textInputAction: TextInputAction.next,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly,
+        LengthLimitingTextInputFormatter(1)],
+        textInputAction: TextInputAction.next,
+        onEditingComplete: () => FocusScope.of(context).nextFocus(),
         textAlign: TextAlign.center,
         textAlignVertical: TextAlignVertical.center,
         cursorHeight: 20.h,
@@ -198,3 +221,5 @@ class AppOtpField extends StatelessWidget {
     );
   }
 }
+
+

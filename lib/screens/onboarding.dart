@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smart_pay/app_theme.dart';
+import 'package:smart_pay/screens/screens.dart';
 import 'package:smart_pay/screens/sign_in.dart';
 
 import '../widgets/widgets.dart';
@@ -50,7 +51,7 @@ class Onboarding extends ConsumerWidget {
                     alignment: Alignment.topRight,
                     child: GestureDetector(
 
-                      onTap: ()=>Navigator.push(context, MaterialPageRoute(builder: (context)=> SignIn())),
+                      onTap: ()=>Navigator.of(context).push(MaterialPageRoute(builder: (context)=> SignIn())),
                       child: Text(
                         'Skip',
                         style: Theme.of(context)
@@ -93,7 +94,7 @@ class Onboarding extends ConsumerWidget {
                   SizedBox(
                     height: 34.h,
                   ),
-                  AppButton(text: 'Get Started', onPressed: () { Navigator.of(context).push(MaterialPageRoute(builder: (context)=> SignIn())); }, width: 287,),
+                  AppButton(text: 'Get Started', onPressed: () { Navigator.of(context).push(MaterialPageRoute(builder: (context)=> SignUp())); }, width: 287,),
                 ],
               ),
             )

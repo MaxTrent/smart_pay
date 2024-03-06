@@ -2,24 +2,44 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:smart_pay/data/api_services.dart';
+import 'package:smart_pay/models/models.dart';
 import 'package:smart_pay/screens/screens.dart';
 
 import '../app_theme.dart';
 import '../widgets/widgets.dart';
 
+
+final _emailController =
+Provider<TextEditingController>((ref) => TextEditingController());
+
 class SignUp extends ConsumerWidget {
   SignUp({super.key});
 
-  final _emailController =
-      Provider<TextEditingController>((ref) => TextEditingController());
+
 
   @override
   Widget build(BuildContext context, ref) {
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: SafeArea(
+    final email = ref
+        .watch(_emailController)
+        .text;
+    final getEmailTokenProvider =
+    FutureProvider.family<SignUpModel, String>((ref, email) async {
+      print('getEmailTokenProvider executed');
+      try {
+        final api = ref.read(apiServiceProvider);
+        return api.getEmailToken(email);
+      } catch (e) {
+        print(e.toString());
+        throw e;
+      }
+    });
+
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Form(
@@ -52,18 +72,25 @@ class SignUp extends ConsumerWidget {
                   SizedBox(height: 30.h),
                   Text.rich(TextSpan(
                       text: 'Create a ',
-                      style: Theme.of(context).textTheme.displayLarge,
+                      style: Theme
+                          .of(context)
+                          .textTheme
+                          .displayLarge,
                       children: [
                         TextSpan(
                           text: 'Smartpay',
-                          style: Theme.of(context)
+                          style: Theme
+                              .of(context)
                               .textTheme
                               .displayLarge!
                               .copyWith(color: darkGreen),
                         ),
                         TextSpan(
                           text: '\naccount',
-                          style: Theme.of(context).textTheme.displayLarge,
+                          style: Theme
+                              .of(context)
+                              .textTheme
+                              .displayLarge,
                         ),
                       ])),
                   SizedBox(height: 32.h),
@@ -77,13 +104,36 @@ class SignUp extends ConsumerWidget {
                   ),
                   Center(
                       child: AppButton(
-                    text: 'Sign Up',
-                    onPressed: () {
-                      Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => VerifySignUp()));
-                    },
-                    width: 327,
-                  )),
+                        text: 'Sign Up',
+                        onPressed: () async {
+                          final result = await ref.watch(getEmailTokenProvider(email).future);
+                          print('before await result.when');
+                          result.when(
+                            data: (signUpModel) {
+                              print(signUpModel);
+                              print('success');
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => VerifySignUp()));
+                            },
+                            error: (error, _) {
+                              print('error oooo');
+                            },
+                            loading: () {
+                              print('loading');
+                              return Center(child: SizedBox(height: 20,
+                                  width: 25,
+                                  child: CircularProgressIndicator()));
+                            },
+                          );
+                          print('After await result.when');
+
+                          // Navigator.of(context).push(
+                          //     MaterialPageRoute(builder: (context) => VerifySignUp()));
+                        },
+                        width: 327,
+                      )),
                   SizedBox(
                     height: 32.h,
                   ),
@@ -99,15 +149,17 @@ class SignUp extends ConsumerWidget {
                       },
                       child: Text.rich(TextSpan(
                           text: 'Already have an account? ',
-                          style: Theme.of(context)
+                          style: Theme
+                              .of(context)
                               .textTheme
                               .displayMedium!
                               .copyWith(
-                                  fontWeight: FontWeight.w400, color: darkGrey),
+                              fontWeight: FontWeight.w400, color: darkGrey),
                           children: [
                             TextSpan(
                                 text: 'Sign In',
-                                style: Theme.of(context)
+                                style: Theme
+                                    .of(context)
                                     .textTheme
                                     .displayMedium!
                                     .copyWith(color: darkGreen))

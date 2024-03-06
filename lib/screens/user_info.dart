@@ -4,9 +4,14 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:smart_pay/screens/screens.dart';
 import 'package:smart_pay/widgets/widgets.dart';
 import 'dart:ui';
 import '../app_theme.dart';
+
+final selectedCountryProvider = StateProvider<String>((ref) => '');
+final selectedCountryNameProvider = StateProvider<String>((ref) => '');
+final selectedCountryFlagProvider = StateProvider<String>((ref) => '');
 
 class UserInfo extends ConsumerWidget {
   UserInfo({super.key});
@@ -18,12 +23,15 @@ class UserInfo extends ConsumerWidget {
       Provider((ref) => TextEditingController());
   final _userNameControllerProvider =
       Provider((ref) => TextEditingController());
-  final _countryControllerProvider = Provider((ref) => TextEditingController());
+  final _countryControllerProvider = Provider((ref) =>
+      TextEditingController(text: ref.watch(selectedCountryNameProvider)));
   final _passwordControllerProvider =
       Provider((ref) => TextEditingController());
 
   @override
   Widget build(BuildContext context, ref) {
+    final selectedCountryName = ref.watch(selectedCountryNameProvider);
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus!.unfocus(),
       child: Scaffold(
@@ -90,8 +98,9 @@ class UserInfo extends ConsumerWidget {
                           backgroundColor: Colors.transparent,
                           isScrollControlled: true,
                           builder: (BuildContext context) => BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                            child: Container(
+                                filter:
+                                    ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+                                child: Container(
                                   height: 617.h,
                                   decoration: BoxDecoration(
                                       color: Colors.white,
@@ -188,12 +197,18 @@ class UserInfo extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
-                          ));
+                              ));
                     },
                     readOnly: true,
                     controller: ref.watch(_countryControllerProvider),
                     hintText: 'Select Country',
                     keyboardType: TextInputType.name,
+                    prefixIcon: Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 12.0.w, vertical: 16.h),
+                      child: SvgPicture.asset(
+                          ref.watch(selectedCountryFlagProvider)),
+                    ),
                     suffixIcon: Padding(
                       padding: EdgeInsets.symmetric(
                           horizontal: 16.0.w, vertical: 18.h),
@@ -223,6 +238,16 @@ class UserInfo extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  SizedBox(
+                    height: 24.h,
+                  ),
+                  AppButton(
+                      text: 'Continue',
+                      onPressed: () {
+                        Navigator.of(context).push(
+                            MaterialPageRoute(builder: (context) => SetPin()));
+                      },
+                      width: 327)
                 ],
               ),
             ),
@@ -247,36 +272,53 @@ class CountryListTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return Container(
-      height: 64.h,
-      width: 327.w,
-      decoration: BoxDecoration(
-        color: textFieldColor,
-      ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-        child: Row(
-          children: [
-            SvgPicture.asset(countryFlagUrl),
-            SizedBox(
-              width: 16.w,
-            ),
-            Text(
-              countryNameShort,
-              style: Theme.of(context)
-                  .textTheme
-                  .displayMedium!
-                  .copyWith(fontWeight: FontWeight.w500, color: darkGrey),
-            ),
-            SizedBox(
-              width: 16.w,
-            ),
-            Text(countryName,
-                style: Theme.of(context)
-                    .textTheme
-                    .displayMedium!
-                    .copyWith(color: buttonColor)),
-          ],
+    final selectedCountry = ref.watch(selectedCountryProvider);
+
+    return GestureDetector(
+      onTap: () {
+        ref.read(selectedCountryProvider.notifier).state = countryNameShort;
+        ref.read(selectedCountryNameProvider.notifier).state = countryName;
+        ref.read(selectedCountryFlagProvider.notifier).state = countryFlagUrl;
+        Navigator.pop(context);
+      },
+      child: Container(
+        height: 64.h,
+        width: 327.w,
+        decoration: BoxDecoration(
+          color: textFieldColor,
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  SvgPicture.asset(countryFlagUrl),
+                  SizedBox(
+                    width: 16.w,
+                  ),
+                  Text(
+                    countryNameShort,
+                    style: Theme.of(context)
+                        .textTheme
+                        .displayMedium!
+                        .copyWith(fontWeight: FontWeight.w500, color: darkGrey),
+                  ),
+                  SizedBox(
+                    width: 16.w,
+                  ),
+                  Text(countryName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .displayMedium!
+                          .copyWith(color: buttonColor)),
+                ],
+              ),
+              if (selectedCountry == countryNameShort)
+                SvgPicture.asset('assets/countrycheck.svg'),
+            ],
+          ),
         ),
       ),
     );
