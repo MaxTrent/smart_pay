@@ -5,8 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:smart_pay/models/models.dart';
-import 'package:smart_pay/screens/screens.dart';
-
 
 
 final apiServiceProvider = Provider((ref) => ApiService());
@@ -24,8 +22,6 @@ class ApiService{
         headers: {'Accept': 'application/json'});
     print('getEmailToken executing...');
 
-
-
     try {
 
       if (response.statusCode == 200) {
@@ -40,27 +36,28 @@ class ApiService{
           print('Response gotten');
         }
 
+
       }
       else {
         var data = json.decode(response.body);
-
-        Fluttertoast.showToast(msg: 'Unable to confirm email: ${data['message']?? 'Unknown error'} ');
-        throw Exception('Unable to confirm email: ${data['message']}');
+        Fluttertoast.showToast(msg: 'Unable to confirm email: ${data['errors']?? 'Unknown error'} ');
+        throw Exception('Unable to confirm email: ${data}');
       }
+
+      return signUpModel;
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
       }
+      throw Exception(e);
     }
-    return signUpModel;
   }
 
-  Future<VerifySignUpModel> verifyEmail(
-      BuildContext context, String email, String token) async {
+  Future<VerifySignUpModel> verifyEmail(String email, String token) async {
     late VerifySignUpModel verifySignUpModel;
 
 
-    final response = await http.post(Uri.https(baseUrl, 'auth/email/verify'),
+    final response = await http.post(Uri.https(baseUrl, '/api/v1/auth/email/verify'),
         body: ({
           "email": email,
           "token": token,
@@ -72,33 +69,36 @@ class ApiService{
         verifySignUpModel = VerifySignUpModel.fromJson(data);
 
         if (kDebugMode) {
-          print('Response gotten');
-        }
-        if (context.mounted) {
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => UserInfo()));
+          print('verified');
         }
       }
-      throw Exception('Unable to verify user: ${response.body}');
+      else{
+      var data = json.decode(response.body);
+      Fluttertoast.showToast(msg: 'Unable to verify user: ${data['message']?? 'Unknown error'} ');
+      throw Exception('Unable to verify user: ${response.body}');}
+
+      return verifySignUpModel;
     } catch (e) {
       if (kDebugMode) {
         print(e.toString());
       }
+      throw Exception(e);
     }
-    return verifySignUpModel;
+
   }
 
-  Future<RegisterUserModel> registerUser(BuildContext context, String fullName,
-      String userName, String email, String country, String password) async {
+  Future<RegisterUserModel> registerUser(String fullName,
+      String userName, String email, String password) async {
     late RegisterUserModel registerUserModel;
 
-    final response = await http.post(Uri.https(baseUrl, 'auth/register'),
+    final response = await http.post(Uri.https(baseUrl, '/api/v1/auth/register'),
         body: ({
           'full_name': fullName,
           'username': userName,
           'email': email,
-          'country': country,
-          'password': password
+          'country': 'NG',
+          'password': password,
+          "device_name": "web"
         }),
         headers: {'Accept': 'application/json'});
 
@@ -110,11 +110,13 @@ class ApiService{
         if (kDebugMode) {
           print('Response gotten');
         }
-        if (context.mounted) {
-          Navigator.pushReplacement(
-              context, MaterialPageRoute(builder: (context) => SetPin()));
-        }
+        // if (context.mounted) {
+        //   Navigator.pushReplacement(
+        //       context, MaterialPageRoute(builder: (context) => SetPin()));
+        // }
       }
+      var data = json.decode(response.body);
+      Fluttertoast.showToast(timeInSecForIosWeb: 5, msg: 'Unable to register user: ${data['errors']?? 'Unknown error'} ');
       throw Exception('Unable to register user: ${response.body}');
     } catch (e) {
       if (kDebugMode) {

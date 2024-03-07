@@ -1,36 +1,109 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:smart_pay/data/api_services.dart';
+import 'package:smart_pay/models/models.dart';
 import 'package:smart_pay/screens/screens.dart';
 import 'package:smart_pay/widgets/widgets.dart';
 import 'dart:ui';
 import '../app_theme.dart';
+import '../main.dart';
 
+//State Providers to handle the selected country, country shortname, flagUrl and the password obscuring
 final selectedCountryProvider = StateProvider<String>((ref) => '');
+final selectedCountryShortNameProvider = StateProvider<String>((ref) => '');
 final selectedCountryNameProvider = StateProvider<String>((ref) => '');
 final selectedCountryFlagProvider = StateProvider<String>((ref) => '');
+final obscureTextProvider = StateProvider<bool>((ref) => true);
+
+
+//returns true if all the textfields have values
+final enableButtonProvider = Provider<bool>((ref) {
+  final fullName = ref.watch(fullNameControllerProvider).text;
+  final userName = ref.watch(userNameControllerProvider).text;
+  // final selectedCountry = ref.watch(selectedCountryShortNameProvider);
+  final password = ref.watch(passwordControllerProvider).text;
+
+  // Check if all text fields are not empty
+  return fullName.isNotEmpty &&
+      userName.isNotEmpty &&
+      password.isNotEmpty;
+});
+
+final searchCountryControllerProvider =
+    Provider((ref) => TextEditingController());
+final fullNameControllerProvider = Provider((ref) => TextEditingController());
+final userNameControllerProvider = Provider((ref) => TextEditingController());
+final countryControllerProvider = Provider((ref) =>
+    TextEditingController(text: ref.watch(selectedCountryNameProvider)));
+final passwordControllerProvider = Provider((ref) => TextEditingController());
+
+final registerUserProvider = FutureProvider((ref) async {
+  final api = ref.read(apiServiceProvider);
+  return api.registerUser(
+      ref.watch(fullNameControllerProvider).text,
+      ref.watch(userNameControllerProvider).text,
+      ref.watch(emailController).text,
+      ref.watch(passwordControllerProvider).text);
+});
+
+//to manage different states of the ui
+class RegisterUserState{
+  final bool isLoading;
+  final RegisterUserModel? data;
+  final String? error;
+
+  RegisterUserState({required this.isLoading, this.data, this.error});
+}
+
+//notifier to handle the logic for the states
+class RegisterUserNotifier extends StateNotifier<RegisterUserState> {
+  final ApiService apiService;
+  final VoidCallback onSuccess;
+
+  RegisterUserNotifier(this.apiService, this.onSuccess) : super(RegisterUserState(isLoading: false));
+
+  Future<void> signUpUser(String fullName, String userName, String email, String password) async {
+    try {
+      state = RegisterUserState(isLoading: true);
+      final data = await apiService.registerUser(fullName, userName, email, password);
+      state = RegisterUserState(isLoading: false, data: data);
+      onSuccess();
+    } catch (error) {
+      state = RegisterUserState(isLoading: false, error: error.toString());
+      if (kDebugMode) {
+        print(error.toString());
+      }
+      Fluttertoast.showToast(msg: error.toString());
+    }
+  }
+}
+
+final registerUserNotifierProvider = StateNotifierProvider<RegisterUserNotifier, RegisterUserState>((ref) {
+  final apiService = ref.read(apiServiceProvider);
+  final navigatorKey = ref.read(navigatorKeyProvider);
+  return RegisterUserNotifier(apiService,  () {
+    //Navigates to set pin when successful
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (context) => SetPin()));
+  },);
+});
+
+
+
+
+
 
 class UserInfo extends ConsumerWidget {
   UserInfo({super.key});
 
-  final obscureTextProvider = StateProvider<bool>((ref) => true);
-  final _searchCountryControllerProvider =
-      Provider((ref) => TextEditingController());
-  final _fullNameControllerProvider =
-      Provider((ref) => TextEditingController());
-  final _userNameControllerProvider =
-      Provider((ref) => TextEditingController());
-  final _countryControllerProvider = Provider((ref) =>
-      TextEditingController(text: ref.watch(selectedCountryNameProvider)));
-  final _passwordControllerProvider =
-      Provider((ref) => TextEditingController());
-
   @override
   Widget build(BuildContext context, ref) {
-    final selectedCountryName = ref.watch(selectedCountryNameProvider);
+    final registerUser = ref.watch(registerUserProvider);
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus!.unfocus(),
@@ -81,12 +154,12 @@ class UserInfo extends ConsumerWidget {
                   ),
                   SizedBox(height: 32.h),
                   AppTextField(
-                      controller: ref.watch(_fullNameControllerProvider),
+                      controller: ref.watch(fullNameControllerProvider),
                       hintText: 'Full name',
                       keyboardType: TextInputType.name),
                   SizedBox(height: 16.h),
                   AppTextField(
-                      controller: ref.watch(_userNameControllerProvider),
+                      controller: ref.watch(userNameControllerProvider),
                       hintText: 'Username',
                       keyboardType: TextInputType.name),
                   SizedBox(height: 16.h),
@@ -121,7 +194,7 @@ class UserInfo extends ConsumerWidget {
                                                 onPressed: () {
                                                   ref
                                                       .read(
-                                                          _searchCountryControllerProvider)
+                                                          searchCountryControllerProvider)
                                                       .clear();
                                                 },
                                                 style: ButtonStyle(
@@ -142,7 +215,7 @@ class UserInfo extends ConsumerWidget {
                                               CupertinoIcons.search,
                                             ),
                                             controller: ref.watch(
-                                                _searchCountryControllerProvider),
+                                                searchCountryControllerProvider),
                                             hintText: 'Search',
                                             keyboardType: TextInputType.text),
                                         SizedBox(
@@ -200,7 +273,7 @@ class UserInfo extends ConsumerWidget {
                               ));
                     },
                     readOnly: true,
-                    controller: ref.watch(_countryControllerProvider),
+                    controller: ref.watch(countryControllerProvider),
                     hintText: 'Select Country',
                     keyboardType: TextInputType.name,
                     prefixIcon: Padding(
@@ -221,7 +294,7 @@ class UserInfo extends ConsumerWidget {
                   ),
                   SizedBox(height: 16.h),
                   AppTextField(
-                    controller: ref.read(_passwordControllerProvider),
+                    controller: ref.read(passwordControllerProvider),
                     hintText: 'New Password',
                     keyboardType: TextInputType.emailAddress,
                     obscureText: ref.watch(obscureTextProvider),
@@ -242,10 +315,29 @@ class UserInfo extends ConsumerWidget {
                     height: 24.h,
                   ),
                   AppButton(
+                      backgroundColor: ref.watch(enableButtonProvider)
+                          ? buttonColor
+                          : buttonColor.withOpacity(0.7),
                       text: 'Continue',
                       onPressed: () {
-                        Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => SetPin()));
+                        ref.watch(enableButtonProvider)
+                            ? registerUser.when(data: (data) {
+                                print('Registration Success');
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) => SetPin()));
+                              }, error: (error, stackTrace) {
+                                Fluttertoast.showToast(
+                                    msg:
+                                        'Registration Error: ${error.toString()}');
+                                print('Registration Error: $error');
+                                print(stackTrace);
+                              }, loading: () {
+                                print('loading');
+                                print(ref
+                                    .watch(selectedCountryShortNameProvider));
+                                return CircularProgressIndicator();
+                              })
+                            : null;
                       },
                       width: 327)
                 ],
@@ -279,6 +371,8 @@ class CountryListTile extends ConsumerWidget {
         ref.read(selectedCountryProvider.notifier).state = countryNameShort;
         ref.read(selectedCountryNameProvider.notifier).state = countryName;
         ref.read(selectedCountryFlagProvider.notifier).state = countryFlagUrl;
+        ref.read(selectedCountryShortNameProvider.notifier).state =
+            countryNameShort;
         Navigator.pop(context);
       },
       child: Container(

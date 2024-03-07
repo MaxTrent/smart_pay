@@ -2,28 +2,74 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:smart_pay/data/api_services.dart';
+import 'package:smart_pay/models/models.dart';
 import 'package:smart_pay/screens/screens.dart';
 import 'package:smart_pay/validators.dart';
 import 'package:smart_pay/widgets/app_button.dart';
 
 import '../app_theme.dart';
-
+import '../main.dart';
 
 
 final startTimeProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
+final otpProvider = StateProvider<String>((ref) => '');
 
 final submitButtonColorProvider =
     StateProvider<Color>((ref) => buttonColor.withOpacity(0.7));
 
 final otpControllersProvider =
-Provider.family<TextEditingController, int>((ref, id) {
+    Provider.family<TextEditingController, int>((ref, id) {
   return TextEditingController();
+});
+
+
+//to manage different states of the ui
+class SignUpVerifyState {
+  final bool isLoading;
+  final VerifySignUpModel? data;
+  final String? error;
+
+  SignUpVerifyState({required this.isLoading, this.data, this.error});
+}
+
+class SignUpVerifyNotifier extends StateNotifier<SignUpVerifyState> {
+  final ApiService apiService;
+  final VoidCallback onSuccess;
+
+  SignUpVerifyNotifier(this.apiService, this.onSuccess) : super(SignUpVerifyState(isLoading: false));
+
+  Future<void> verifyUserEmail(String email, String token) async {
+    try {
+      state = SignUpVerifyState(isLoading: true);
+      final data = await apiService.verifyEmail(email, token);
+      state = SignUpVerifyState(isLoading: false, data: data);
+      onSuccess();
+    } catch (error) {
+      state = SignUpVerifyState(isLoading: false, error: error.toString());
+      if (kDebugMode) {
+        print(error.toString());
+      }
+      Fluttertoast.showToast(msg: error.toString());
+    }
+  }
+}
+
+final signUpVerifyNotifierProvider = StateNotifierProvider<SignUpVerifyNotifier, SignUpVerifyState>((ref) {
+  final apiService = ref.read(apiServiceProvider);
+  final navigatorKey = ref.read(navigatorKeyProvider);
+  return SignUpVerifyNotifier(apiService,  () {
+    //Navigates to verifyscreen when successful
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (context) => UserInfo()));
+  },);
 });
 
 class VerifySignUp extends ConsumerWidget {
@@ -31,24 +77,24 @@ class VerifySignUp extends ConsumerWidget {
 
   final _formKey = GlobalKey<FormState>();
   final _countdownStreamProvider = StreamProvider<int>(
-        (ref) => Stream.periodic(Duration(seconds: 1), (_) => max(0, 30 - DateTime.now().difference(ref.watch(startTimeProvider)).inSeconds))
-        .handleError((error) => 0),
+    (ref) => Stream.periodic(
+        Duration(seconds: 1),
+        (_) => max(
+            0,
+            30 -
+                DateTime.now()
+                    .difference(ref.watch(startTimeProvider))
+                    .inSeconds)).handleError((error) => 0),
   );
-
-  final otpProvider = StateProvider<String>((ref) => '');
 
   final enableButton = StateProvider((ref) => false);
 
-
-
   @override
   Widget build(BuildContext context, ref) {
-
-
-    final otpControllers = List.generate(5, (i) => ref.watch(otpControllersProvider(i)));
+final signUpVerifyState = ref.watch(signUpVerifyNotifierProvider);
+    final otpControllers =
+        List.generate(5, (i) => ref.watch(otpControllersProvider(i)));
     final remainingSeconds = ref.watch(_countdownStreamProvider);
-
-
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -120,12 +166,21 @@ class VerifySignUp extends ConsumerWidget {
                           if (i < 4) {
                             FocusScope.of(context).nextFocus();
                           }
+                          final text = ref.read(otpProvider.notifier).state;
+                          ref.read(otpProvider.notifier).state =
+                              (i < text.length)
+                                  ? text.substring(0, i) +
+                                      value +
+                                      text.substring(i + 1)
+                                  : text + value;
                         } else {
                           if (i > 0) {
                             FocusScope.of(context).previousFocus();
                           }
                         }
-                        ref.read(enableButton.notifier).state = otpControllers.every((controller) => controller.text.isNotEmpty);
+
+                        ref.read(enableButton.notifier).state = otpControllers
+                            .every((controller) => controller.text.isNotEmpty);
                       },
                     ),
                 ],
@@ -143,14 +198,23 @@ class VerifySignUp extends ConsumerWidget {
               SizedBox(
                 height: 67.h,
               ),
-              AppButton(
+                  signUpVerifyState.isLoading ? const Center(child: CircularProgressIndicator(color: buttonColor,)):AppButton(
                 text: 'Continue',
-                onPressed: () {ref.watch(enableButton)?
-                Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => UserInfo())): null;
+                onPressed: () {
+                  final combinedOtp = ref.read(otpProvider);
+                  final token = ref.watch(otpProvider);
+                  final email = ref.watch(emailController).text;
+                  if (kDebugMode) {
+                    print(combinedOtp);
+                  }
+                  ref.watch(enableButton) ?
+                  ref.read(signUpVerifyNotifierProvider.notifier).verifyUserEmail(email, token): null;
+
                 },
                 width: 327,
-                backgroundColor: ref.watch(enableButton) ? buttonColor : ref.watch(submitButtonColorProvider),
+                backgroundColor: ref.watch(enableButton)
+                    ? buttonColor
+                    : ref.watch(submitButtonColorProvider),
               )
             ]),
           ),
@@ -158,10 +222,7 @@ class VerifySignUp extends ConsumerWidget {
       ),
     );
   }
-
-
 }
-
 
 class AppOtpField extends StatelessWidget {
   AppOtpField({
@@ -182,8 +243,10 @@ class AppOtpField extends StatelessWidget {
         // key: formKey,
         // autofocus: true,
         // textInputAction: TextInputAction.next,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(1)],
+        inputFormatters: [
+          FilteringTextInputFormatter.digitsOnly,
+          LengthLimitingTextInputFormatter(1)
+        ],
         textInputAction: TextInputAction.next,
         onEditingComplete: () => FocusScope.of(context).nextFocus(),
         textAlign: TextAlign.center,
@@ -221,5 +284,3 @@ class AppOtpField extends StatelessWidget {
     );
   }
 }
-
-

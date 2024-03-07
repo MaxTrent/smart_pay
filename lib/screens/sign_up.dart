@@ -1,17 +1,56 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:smart_pay/data/api_services.dart';
 import 'package:smart_pay/models/models.dart';
 import 'package:smart_pay/screens/screens.dart';
 
 import '../app_theme.dart';
+import '../main.dart';
 import '../widgets/widgets.dart';
 
 
-final _emailController =
+final emailController =
 Provider<TextEditingController>((ref) => TextEditingController());
+
+
+class SignUpState {
+  final bool isLoading;
+  final SignUpModel? data;
+  final String? error;
+
+  SignUpState({required this.isLoading, this.data, this.error});
+}
+
+class SignUpNotifier extends StateNotifier<SignUpState> {
+  final ApiService apiService;
+  final VoidCallback onSuccess;
+
+  SignUpNotifier(this.apiService, this.onSuccess) : super(SignUpState(isLoading: false));
+
+  Future<void> signUp(String email) async {
+    try {
+      state = SignUpState(isLoading: true);
+      final data = await apiService.getEmailToken(email);
+      state = SignUpState(isLoading: false, data: data);
+      onSuccess();
+    } catch (error) {
+      state = SignUpState(isLoading: false, error: error.toString());
+    }
+  }
+}
+
+final signUpNotifierProvider = StateNotifierProvider<SignUpNotifier, SignUpState>((ref) {
+  final apiService = ref.read(apiServiceProvider);
+  final navigatorKey = ref.read(navigatorKeyProvider);
+  return SignUpNotifier(apiService,  () {
+    //Navigates to verifyscreen when successful
+    navigatorKey.currentState?.push(MaterialPageRoute(builder: (context) => VerifySignUp()));
+  },);
+});
 
 class SignUp extends ConsumerWidget {
   SignUp({super.key});
@@ -20,21 +59,7 @@ class SignUp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    final email = ref
-        .watch(_emailController)
-        .text;
-    final getEmailTokenProvider =
-    FutureProvider.family<SignUpModel, String>((ref, email) async {
-      print('getEmailTokenProvider executed');
-      try {
-        final api = ref.read(apiServiceProvider);
-        return api.getEmailToken(email);
-      } catch (e) {
-        print(e.toString());
-        throw e;
-      }
-    });
-
+    final signUpState = ref.watch(signUpNotifierProvider);
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -95,7 +120,7 @@ class SignUp extends ConsumerWidget {
                       ])),
                   SizedBox(height: 32.h),
                   AppTextField(
-                    controller: ref.watch(_emailController),
+                    controller: ref.watch(emailController),
                     hintText: 'Email',
                     keyboardType: TextInputType.emailAddress,
                   ),
@@ -103,34 +128,13 @@ class SignUp extends ConsumerWidget {
                     height: 24.h,
                   ),
                   Center(
-                      child: AppButton(
+
+                      child: signUpState.isLoading ? const CircularProgressIndicator(color: buttonColor,): AppButton(
                         text: 'Sign Up',
                         onPressed: () async {
-                          final result = await ref.watch(getEmailTokenProvider(email).future);
-                          print('before await result.when');
-                          result.when(
-                            data: (signUpModel) {
-                              print(signUpModel);
-                              print('success');
-                              Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => VerifySignUp()));
-                            },
-                            error: (error, _) {
-                              print('error oooo');
-                            },
-                            loading: () {
-                              print('loading');
-                              return Center(child: SizedBox(height: 20,
-                                  width: 25,
-                                  child: CircularProgressIndicator()));
-                            },
-                          );
-                          print('After await result.when');
+                          final email = ref.watch(emailController).text;
+                          ref.read(signUpNotifierProvider.notifier).signUp(email);
 
-                          // Navigator.of(context).push(
-                          //     MaterialPageRoute(builder: (context) => VerifySignUp()));
                         },
                         width: 327,
                       )),
