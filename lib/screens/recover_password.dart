@@ -14,11 +14,20 @@ class RecoverPassword extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return Scaffold(
-      // resizeToAvoidBottomInset: false,
-      body: GestureDetector(
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: SafeArea(
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+
+      child: Scaffold(
+        // appBar: PreferredSize(
+        //   preferredSize: Size(0,60.h),
+        //   child: Padding(
+        //     padding: EdgeInsets.only(top: 24.h, left: 16.w),            child: AppBar(
+        //     primary: false,
+        //   ),
+        //   ),
+        // ),
+        // resizeToAvoidBottomInset: false,
+        body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: SingleChildScrollView(

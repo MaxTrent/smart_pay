@@ -25,11 +25,19 @@ class NewPassword extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        // Dismiss keyboard on tap outside fields
-        child: SafeArea(
+    return GestureDetector(
+      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(0,60.h),
+          child: Padding(
+            padding: EdgeInsets.only(top: 24.h, left: 16.w),            child: AppBar(
+            primary: false,
+          ),
+          ),
+        ),
+        body: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
             child: Form(
@@ -42,24 +50,7 @@ class NewPassword extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(height: 8.h),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        // Go back to previous screen
-                        child: Container(
-                          height: 40.h,
-                          width: 40.h,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12.r),
-                            // Rounded corners for button
-                            border: Border.all(
-                                color: lightGrey,
-                                width: 1.w),
-                          ),
-                          child: Icon(
-                            CupertinoIcons.back,
-                          ),
-                        ),
-                      ),
+
                       SizedBox(height: 32.h),
                       Text(
                         'Create New Password',

@@ -64,6 +64,14 @@ class Dashboard extends ConsumerWidget {
     final getSecret = ref.watch(getSecretProvider);
 
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size(0,60.h),
+        child: Padding(
+          padding: EdgeInsets.only(top: 24.h, left: 16.w),            child: AppBar(
+          primary: false,
+        ),
+        ),
+      ),
       body: Center(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: 12.w),

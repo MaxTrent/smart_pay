@@ -66,6 +66,14 @@ class SignUp extends ConsumerWidget {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(0,60.h),
+          child: Padding(
+            padding: EdgeInsets.only(top: 24.h, left: 16.w),            child: AppBar(
+              primary: false,
+            ),
+          ),
+        ),
         resizeToAvoidBottomInset: false,
         body: SafeArea(
           child: Padding(
@@ -75,28 +83,7 @@ class SignUp extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    height: 8.h,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                    child: Container(
-                      height: 40.h,
-                      width: 40.h,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        border: Border.all(
-                          color: lightGrey,
-                          width: 1.w,
-                        ),
-                      ),
-                      child: Icon(
-                        CupertinoIcons.back,
-                      ),
-                    ),
-                  ),
+
                   SizedBox(height: 30.h),
                   Text.rich(TextSpan(
                       text: 'Create a ',

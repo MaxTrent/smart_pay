@@ -15,26 +15,25 @@ import '../data/api_services.dart';
 import '../data/app_storage.dart';
 import '../main.dart';
 
-
-final _emailController =
-Provider.autoDispose<TextEditingController>((ref) => TextEditingController());
-final _passwordController =
-Provider.autoDispose<TextEditingController>((ref) => TextEditingController());
-
+final _emailController = Provider.autoDispose<TextEditingController>(
+    (ref) => TextEditingController());
+final _passwordController = Provider.autoDispose<TextEditingController>(
+    (ref) => TextEditingController());
 
 class SignInState {
-final bool isLoading;
-final LoginModel? data;
-final String? error;
+  final bool isLoading;
+  final LoginModel? data;
+  final String? error;
 
- SignInState({required this.isLoading, this.data, this.error});
+  SignInState({required this.isLoading, this.data, this.error});
 }
 
-class SignInNotifier extends StateNotifier<SignInState>{
+class SignInNotifier extends StateNotifier<SignInState> {
   final ApiService apiService;
   final VoidCallback onSuccess;
 
-  SignInNotifier(this.apiService, this.onSuccess) : super(SignInState(isLoading: false));
+  SignInNotifier(this.apiService, this.onSuccess)
+      : super(SignInState(isLoading: false));
 
   Future<void> signIn(String email, String password) async {
     try {
@@ -46,18 +45,17 @@ class SignInNotifier extends StateNotifier<SignInState>{
       state = SignInState(isLoading: false, error: error.toString());
     }
   }
-
-
 }
 
-final signInNotifierProvider = StateNotifierProvider<SignInNotifier, SignInState>((ref) {
-    final apiService = ref.read(apiServiceProvider);
-final navigatorKey = ref.read(navigatorKeyProvider);
-return SignInNotifier(apiService, () async{
-navigatorKey.currentState?.push(MaterialPageRoute(builder: (context)=> Dashboard()));
-await SharedPreferencesHelper.setLoggedIn();
-});
-
+final signInNotifierProvider =
+    StateNotifierProvider<SignInNotifier, SignInState>((ref) {
+  final apiService = ref.read(apiServiceProvider);
+  final navigatorKey = ref.read(navigatorKeyProvider);
+  return SignInNotifier(apiService, () async {
+    navigatorKey.currentState
+        ?.push(MaterialPageRoute(builder: (context) => Dashboard()));
+    await SharedPreferencesHelper.setLoggedIn();
+  });
 });
 
 class SignIn extends ConsumerWidget {
@@ -74,6 +72,15 @@ class SignIn extends ConsumerWidget {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: Size(0, 60.h),
+          child: Padding(
+            padding: EdgeInsets.only(top: 24.h, left: 16.w),
+            child: AppBar(
+              primary: false,
+            ),
+          ),
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -83,26 +90,6 @@ class SignIn extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 8.h,),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        height: 40.h,
-                        width: 40.h,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12.r),
-                          border: Border.all(
-                            color: lightGrey,
-                            width: 1.w,
-                          ),
-                        ),
-                        child: Icon(
-                          CupertinoIcons.back,
-                        ),
-                      ),
-                    ),
                     SizedBox(height: 32.h),
                     Text(
                       'Hi There! 👋',
@@ -111,10 +98,11 @@ class SignIn extends ConsumerWidget {
                     SizedBox(height: 8.h),
                     Text(
                       'Welcome back, Sign in to your account',
-                      style: Theme.of(context).textTheme.displayMedium!.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: darkGrey,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.displayMedium!.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: darkGrey,
+                              ),
                     ),
                     SizedBox(height: 32.h),
                     AppTextField(
@@ -129,8 +117,9 @@ class SignIn extends ConsumerWidget {
                       keyboardType: TextInputType.emailAddress,
                       obscureText: ref.watch(obscureTextProvider),
                       suffixIcon: GestureDetector(
-                        onTap: () => ref.read(obscureTextProvider.notifier).state =
-                        !ref.read(obscureTextProvider.notifier).state,
+                        onTap: () =>
+                            ref.read(obscureTextProvider.notifier).state =
+                                !ref.read(obscureTextProvider.notifier).state,
                         child: Padding(
                           padding: EdgeInsets.symmetric(
                               horizontal: 16.0.w, vertical: 16.h),
@@ -145,36 +134,44 @@ class SignIn extends ConsumerWidget {
                     TextButton(
                       onPressed: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(builder: (context) => RecoverPassword()),
+                          MaterialPageRoute(
+                              builder: (context) => RecoverPassword()),
                         );
                       },
                       style: ButtonStyle(
                         padding: MaterialStateProperty.all<EdgeInsets>(
                           EdgeInsets.zero,
                         ),
-                        overlayColor: MaterialStateProperty.all(Colors.transparent),
+                        overlayColor:
+                            MaterialStateProperty.all(Colors.transparent),
                       ),
                       child: Text(
                         'Forgot Password?',
-                        style: Theme.of(context).textTheme.displayMedium!.copyWith(
-                          color: darkGreen,
-                        ),
+                        style:
+                            Theme.of(context).textTheme.displayMedium!.copyWith(
+                                  color: darkGreen,
+                                ),
                       ),
                     ),
                     SizedBox(height: 24.h),
                     // Sign In button or loading indicator
                     Center(
                       child: signInState.isLoading
-                          ? const CircularProgressIndicator(color: buttonColor,)
+                          ? const CircularProgressIndicator(
+                              color: buttonColor,
+                            )
                           : AppButton(
-                        text: 'Sign In',
-                        onPressed: () async {
-                          final email = ref.watch(_emailController).text;
-                          final password = ref.watch(_passwordController).text;
-                          ref.read(signInNotifierProvider.notifier).signIn(email, password);
-                        },
-                        width: 327,
-                      ),
+                              text: 'Sign In',
+                              onPressed: () async {
+                                final email = ref.watch(_emailController).text;
+                                final password =
+                                    ref.watch(_passwordController).text;
+                                ref
+                                    .read(signInNotifierProvider.notifier)
+                                    .signIn(email, password);
+                              },
+                              width: 327,
+                            ),
                     ),
                     SizedBox(height: 32.h),
                     // Auth alternatives (e.g., social media sign-in)
@@ -191,16 +188,22 @@ class SignIn extends ConsumerWidget {
                         child: Text.rich(
                           TextSpan(
                             text: 'Don’t have an account? ',
-                            style: Theme.of(context).textTheme.displayMedium!.copyWith(
-                              fontWeight: FontWeight.w400,
-                              color: darkGrey,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .displayMedium!
+                                .copyWith(
+                                  fontWeight: FontWeight.w400,
+                                  color: darkGrey,
+                                ),
                             children: [
                               TextSpan(
                                 text: 'Sign Up',
-                                style: Theme.of(context).textTheme.displayMedium!.copyWith(
-                                  color: darkGreen,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .displayMedium!
+                                    .copyWith(
+                                      color: darkGreen,
+                                    ),
                               ),
                             ],
                           ),
@@ -217,8 +220,3 @@ class SignIn extends ConsumerWidget {
     );
   }
 }
-
-
-
-
-
