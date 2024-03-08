@@ -14,12 +14,12 @@ class SignUpModel {
   });
 
   factory SignUpModel.fromJson(Map<String, dynamic> json) => SignUpModel(
-    status: json['status'],
-    message: json['message'],
-    data: Data.fromJson(json['data'] ?? {}),
-    meta: json['meta'],
-    pagination: json['pagination'],
-  );
+        status: json['status'],
+        message: json['message'],
+        data: Data.fromJson(json['data'] ?? {}),
+        meta: json['meta'],
+        pagination: json['pagination'],
+      );
 
   @override
   String toString() =>
@@ -32,8 +32,8 @@ class Data {
   Data({this.token});
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
-    token: json['token'],
-  );
+        token: json['token'],
+      );
 
   @override
   String toString() => 'Data(token: $token)';

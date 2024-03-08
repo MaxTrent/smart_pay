@@ -15,18 +15,17 @@ class OnboardingIndicator extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, ref) {
-    return Row(
-      children: [
-        Container(
-          width: positionIndex == ref.watch(currentIndex) ? 32.w : 6.h,
-          height: 6.h,
-          decoration: BoxDecoration(
-              color: positionIndex == ref.watch(currentIndex)
-                  ? Colors.black
-                  : lightGrey,
-              borderRadius: BorderRadius.circular(500.r)),
-        ),
-      ],
+    final currentIdx = ref.watch(currentIndex);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+      width: positionIndex == currentIdx ? 32.w : 6.h, // Animate width
+      height: 6.h,
+      decoration: BoxDecoration(
+        color: positionIndex == currentIdx ? Colors.black : lightGrey,
+        borderRadius: BorderRadius.circular(500.r),
+      ),
     );
   }
 }

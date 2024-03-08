@@ -1,6 +1,6 @@
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
@@ -8,19 +8,27 @@ import 'package:flutter_svg/svg.dart';
 import '../app_theme.dart';
 import '../widgets/widgets.dart';
 
+// State management provider to toggle password visibility for each field
+
+// Providers to create TextEditingControllers for new and confirm password fields
+final _newPasswordProvider =
+    Provider<TextEditingController>((ref) => TextEditingController());
+final _confirmPasswordProvider =
+    Provider<TextEditingController>((ref) => TextEditingController());
+
 class NewPassword extends ConsumerWidget {
   NewPassword({super.key});
-  final obscureTextProvider = StateProviderFamily<bool, String>((ref, id) => true);
-  final _newPasswordProvider =
-  Provider<TextEditingController>((ref) => TextEditingController());
-  final _confirmPasswordProvider =
-  Provider<TextEditingController>((ref) => TextEditingController());
+
+  final obscureTextProvider =
+  StateProviderFamily<bool, String>((ref, id) => true);
+
 
   @override
   Widget build(BuildContext context, ref) {
     return Scaffold(
       body: GestureDetector(
         onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+        // Dismiss keyboard on tap outside fields
         child: SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 24.w),
@@ -28,26 +36,24 @@ class NewPassword extends ConsumerWidget {
               // key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Space content vertically
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SizedBox(
-                        height: 8.h,
-                      ),
+                      SizedBox(height: 8.h),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
+                        onTap: () => Navigator.pop(context),
+                        // Go back to previous screen
                         child: Container(
                           height: 40.h,
                           width: 40.h,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12.r),
+                            // Rounded corners for button
                             border: Border.all(
-                              color: lightGrey,
-                              width: 1.w,
-                            ),
+                                color: lightGrey,
+                                width: 1.w),
                           ),
                           child: Icon(
                             CupertinoIcons.back,
@@ -62,19 +68,30 @@ class NewPassword extends ConsumerWidget {
                       SizedBox(height: 8.h),
                       Text(
                         'Please, enter a new password below different from the previous password',
-                        style: Theme.of(context).textTheme.displayMedium!.copyWith(
-                            fontWeight: FontWeight.w400, color: darkGrey),
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayMedium!
+                            .copyWith(
+                                fontWeight: FontWeight.w400, color: darkGrey),
                       ),
                       SizedBox(height: 32.h),
                       AppTextField(
                         controller: ref.read(_newPasswordProvider),
                         hintText: 'New Password',
                         keyboardType: TextInputType.emailAddress,
-                        obscureText: ref.watch(obscureTextProvider('newPassword')),
+                        obscureText:
+                            ref.watch(obscureTextProvider('newPassword')),
+                        // Manage visibility using riverpod
                         suffixIcon: GestureDetector(
                           onTap: () =>
-                          ref.read(obscureTextProvider('newPassword').notifier).state =
-                          !ref.read(obscureTextProvider('newPassword').notifier).state,
+                              ref
+                                      .read(obscureTextProvider('newPassword')
+                                          .notifier)
+                                      .state =
+                                  !ref
+                                      .read(obscureTextProvider('newPassword')
+                                          .notifier)
+                                      .state,
                           child: Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: 16.0.w, vertical: 16.h),
@@ -84,18 +101,22 @@ class NewPassword extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        height: 16.h,
-                      ),
+                      SizedBox(height: 16.h),
                       AppTextField(
                         controller: ref.read(_confirmPasswordProvider),
                         hintText: 'Confirm Password',
                         keyboardType: TextInputType.emailAddress,
-                        obscureText: ref.watch(obscureTextProvider('confirmPassword')),
+                        obscureText:
+                            ref.watch(obscureTextProvider('confirmPassword')),
                         suffixIcon: GestureDetector(
-                          onTap: () =>
-                          ref.read(obscureTextProvider('confirmPassword').notifier).state =
-                          !ref.read(obscureTextProvider('confirmPassword').notifier).state,
+                          onTap: () => ref
+                                  .read(obscureTextProvider('confirmPassword')
+                                      .notifier)
+                                  .state =
+                              !ref
+                                  .read(obscureTextProvider('confirmPassword')
+                                      .notifier)
+                                  .state,
                           child: Padding(
                             padding: EdgeInsets.symmetric(
                                 horizontal: 16.0.w, vertical: 16.h),
@@ -105,19 +126,20 @@ class NewPassword extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        height: 24.h,
-                      ),
+                      SizedBox(height: 24.h),
                     ],
                   ),
                   Padding(
                     padding: EdgeInsets.only(bottom: 16.h),
                     child: Center(
-                        child: AppButton(
-                          text: 'Sign In',
-                          onPressed: () {},
-                          width: 327,
-                        )),
+                      child: AppButton(
+                        text: 'Sign In',
+                        onPressed: () {
+                         // ...
+                        },
+                        width: 327,
+                      ),
+                    ),
                   ),
                 ],
               ),

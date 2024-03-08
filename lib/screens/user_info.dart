@@ -21,20 +21,6 @@ final selectedCountryNameProvider = StateProvider<String>((ref) => '');
 final selectedCountryFlagProvider = StateProvider<String>((ref) => '');
 final obscureTextProvider = StateProvider<bool>((ref) => true);
 
-
-//returns true if all the textfields have values
-final enableButtonProvider = Provider<bool>((ref) {
-  final fullName = ref.watch(fullNameControllerProvider).text;
-  final userName = ref.watch(userNameControllerProvider).text;
-  // final selectedCountry = ref.watch(selectedCountryShortNameProvider);
-  final password = ref.watch(passwordControllerProvider).text;
-
-  // Check if all text fields are not empty
-  return fullName.isNotEmpty &&
-      userName.isNotEmpty &&
-      password.isNotEmpty;
-});
-
 final searchCountryControllerProvider =
     Provider((ref) => TextEditingController());
 final fullNameControllerProvider = Provider((ref) => TextEditingController());
@@ -43,17 +29,8 @@ final countryControllerProvider = Provider((ref) =>
     TextEditingController(text: ref.watch(selectedCountryNameProvider)));
 final passwordControllerProvider = Provider((ref) => TextEditingController());
 
-final registerUserProvider = FutureProvider((ref) async {
-  final api = ref.read(apiServiceProvider);
-  return api.registerUser(
-      ref.watch(fullNameControllerProvider).text,
-      ref.watch(userNameControllerProvider).text,
-      ref.watch(emailController).text,
-      ref.watch(passwordControllerProvider).text);
-});
-
 //to manage different states of the ui
-class RegisterUserState{
+class RegisterUserState {
   final bool isLoading;
   final RegisterUserModel? data;
   final String? error;
@@ -66,12 +43,15 @@ class RegisterUserNotifier extends StateNotifier<RegisterUserState> {
   final ApiService apiService;
   final VoidCallback onSuccess;
 
-  RegisterUserNotifier(this.apiService, this.onSuccess) : super(RegisterUserState(isLoading: false));
+  RegisterUserNotifier(this.apiService, this.onSuccess)
+      : super(RegisterUserState(isLoading: false));
 
-  Future<void> signUpUser(String fullName, String userName, String email, String password) async {
+  Future<void> signUpUser(
+      String fullName, String userName, String email, String password) async {
     try {
       state = RegisterUserState(isLoading: true);
-      final data = await apiService.registerUser(fullName, userName, email, password);
+      final data =
+          await apiService.registerUser(fullName, userName, email, password);
       state = RegisterUserState(isLoading: false, data: data);
       onSuccess();
     } catch (error) {
@@ -84,26 +64,31 @@ class RegisterUserNotifier extends StateNotifier<RegisterUserState> {
   }
 }
 
-final registerUserNotifierProvider = StateNotifierProvider<RegisterUserNotifier, RegisterUserState>((ref) {
+final registerUserNotifierProvider =
+    StateNotifierProvider<RegisterUserNotifier, RegisterUserState>((ref) {
   final apiService = ref.read(apiServiceProvider);
   final navigatorKey = ref.read(navigatorKeyProvider);
-  return RegisterUserNotifier(apiService,  () {
-    //Navigates to set pin when successful
-    navigatorKey.currentState?.push(MaterialPageRoute(builder: (context) => SetPin()));
-  },);
+  return RegisterUserNotifier(
+    apiService,
+    () {
+      //Navigates to set pin when successful
+      navigatorKey.currentState
+          ?.push(MaterialPageRoute(builder: (context) => SetPin()));
+    },
+  );
 });
 
 
-
-
-
+final enableButtonProvider = StateProvider((ref) => false);
 
 class UserInfo extends ConsumerWidget {
+  // Returns true if all the textfields have values
+
   UserInfo({super.key});
 
   @override
   Widget build(BuildContext context, ref) {
-    final registerUser = ref.watch(registerUserProvider);
+    final registerUserState = ref.watch(registerUserNotifierProvider);
 
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus!.unfocus(),
@@ -153,17 +138,59 @@ class UserInfo extends ConsumerWidget {
                         ]),
                   ),
                   SizedBox(height: 32.h),
+                  // Full name text field
                   AppTextField(
-                      controller: ref.watch(fullNameControllerProvider),
-                      hintText: 'Full name',
-                      keyboardType: TextInputType.name),
+                    onChanged: (fullName) {
+                      ref.read(enableButtonProvider.notifier).state =
+                          fullName.isNotEmpty &&
+                              ref
+                                  .watch(userNameControllerProvider)
+                                  .text
+                                  .isNotEmpty &&
+                              ref
+                                  .watch(passwordControllerProvider)
+                                  .text
+                                  .isNotEmpty &&
+                              ref
+                                  .watch(selectedCountryShortNameProvider)
+                                  .isNotEmpty;
+                    },
+                    controller: ref.watch(fullNameControllerProvider),
+                    hintText: 'Full name',
+                    keyboardType: TextInputType.name,
+                  ),
                   SizedBox(height: 16.h),
+                  // Username text field
                   AppTextField(
-                      controller: ref.watch(userNameControllerProvider),
-                      hintText: 'Username',
-                      keyboardType: TextInputType.name),
+                    onChanged: (userName) {
+                      ref.read(enableButtonProvider.notifier).state =
+                          ref.watch(fullNameControllerProvider).text.isNotEmpty &&
+                              userName.isNotEmpty &&
+                              ref
+                                  .watch(passwordControllerProvider)
+                                  .text
+                                  .isNotEmpty &&
+                              ref
+                                  .watch(selectedCountryShortNameProvider)
+                                  .isNotEmpty;
+                    },
+                    controller: ref.watch(userNameControllerProvider),
+                    hintText: 'Username',
+                    keyboardType: TextInputType.name,
+                  ),
                   SizedBox(height: 16.h),
+                  // Country selection text field
                   AppTextField(
+                    onChanged: (country) {
+                      ref.read(enableButtonProvider.notifier).state =
+                          ref.watch(fullNameControllerProvider).text.isNotEmpty &&
+                              ref.watch(userNameControllerProvider).text.isNotEmpty &&
+                              ref
+                                  .watch(passwordControllerProvider)
+                                  .text
+                                  .isNotEmpty &&
+                              country.isNotEmpty;
+                    },
                     showCursor: false,
                     onTap: () {
                       showModalBottomSheet(
@@ -171,106 +198,109 @@ class UserInfo extends ConsumerWidget {
                           backgroundColor: Colors.transparent,
                           isScrollControlled: true,
                           builder: (BuildContext context) => BackdropFilter(
-                                filter:
-                                    ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                                child: Container(
-                                  height: 617.h,
-                                  decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.only(
-                                        topLeft: Radius.circular(40.r),
-                                        topRight: Radius.circular(40.r),
-                                        bottomRight: Radius.circular(0.r),
-                                        bottomLeft: Radius.circular(0.r),
-                                      )),
-                                  child: Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(horizontal: 24.w),
-                                    child: Column(
-                                      children: [
-                                        SizedBox(height: 32.h),
-                                        AppTextField(
-                                            suffixIcon: TextButton(
-                                                onPressed: () {
-                                                  ref
-                                                      .read(
-                                                          searchCountryControllerProvider)
-                                                      .clear();
-                                                },
-                                                style: ButtonStyle(
-                                                  padding: MaterialStateProperty
-                                                      .all<EdgeInsets>(
-                                                          EdgeInsets.zero),
-                                                  overlayColor:
-                                                      MaterialStateProperty.all(
-                                                          Colors.transparent),
-                                                ),
-                                                child: Text(
-                                                  'Cancel',
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .displayMedium,
-                                                )),
-                                            prefixIcon: const Icon(
-                                              CupertinoIcons.search,
-                                            ),
-                                            controller: ref.watch(
-                                                searchCountryControllerProvider),
-                                            hintText: 'Search',
-                                            keyboardType: TextInputType.text),
-                                        SizedBox(
-                                          height: 24.h,
-                                        ),
-                                        CountryListTile(
-                                          countryFlagUrl:
-                                              'assets/UnitedStatesMinorOutlyingIslands.svg',
-                                          countryName: 'United States',
-                                          countryNameShort: 'US',
-                                        ),
-                                        SizedBox(
-                                          height: 8.h,
-                                        ),
-                                        CountryListTile(
-                                            countryFlagUrl:
-                                                'assets/UnitedKingdom.svg',
-                                            countryName: 'United Kingdom',
-                                            countryNameShort: 'UK'),
-                                        SizedBox(
-                                          height: 8.h,
-                                        ),
-                                        CountryListTile(
-                                            countryFlagUrl:
-                                                'assets/Singapore.svg',
-                                            countryName: 'Singapore',
-                                            countryNameShort: 'SG'),
-                                        SizedBox(
-                                          height: 8.h,
-                                        ),
-                                        CountryListTile(
-                                            countryFlagUrl: 'assets/China.svg',
-                                            countryName: 'China',
-                                            countryNameShort: 'CN'),
-                                        SizedBox(
-                                          height: 8.h,
-                                        ),
-                                        CountryListTile(
-                                            countryFlagUrl:
-                                                'assets/Netherlands.svg',
-                                            countryName: 'Netherland',
-                                            countryNameShort: 'NL'),
-                                        SizedBox(
-                                          height: 8.h,
-                                        ),
-                                        CountryListTile(
-                                            countryFlagUrl:
-                                                'assets/Indonesia.svg',
-                                            countryName: 'Indonesia',
-                                            countryNameShort: 'ID'),
-                                      ],
+                            filter:
+                            ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+                            child: Container(
+                              height: 617.h,
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(40.r),
+                                    topRight: Radius.circular(40.r),
+                                    bottomRight: Radius.circular(0.r),
+                                    bottomLeft: Radius.circular(0.r),
+                                  )),
+                              child: Padding(
+                                padding:
+                                EdgeInsets.symmetric(horizontal: 24.w),
+                                child: Column(
+                                  children: [
+                                    SizedBox(height: 32.h),
+                                    // Search bar for country selection
+                                    AppTextField(
+                                      suffixIcon: TextButton(
+                                          onPressed: () {
+                                            ref
+                                                .read(
+                                                searchCountryControllerProvider)
+                                                .clear();
+                                          },
+                                          style: ButtonStyle(
+                                            padding: MaterialStateProperty.all<
+                                                EdgeInsets>(
+                                                EdgeInsets.zero),
+                                            overlayColor:
+                                            MaterialStateProperty.all(
+                                                Colors.transparent),
+                                          ),
+                                          child: Text(
+                                            'Cancel',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .displayMedium,
+                                          )),
+                                      prefixIcon: const Icon(
+                                        CupertinoIcons.search,
+                                      ),
+                                      controller: ref
+                                          .watch(searchCountryControllerProvider),
+                                      hintText: 'Search',
+                                      keyboardType: TextInputType.text,
                                     ),
-                                  ),
+                                    SizedBox(
+                                      height: 24.h,
+                                    ),
+                                    // Country list tiles
+                                    CountryListTile(
+                                      countryFlagUrl:
+                                      'assets/UnitedStatesMinorOutlyingIslands.svg',
+                                      countryName: 'United States',
+                                      countryNameShort: 'US',
+                                    ),
+                                    SizedBox(
+                                      height: 8.h,
+                                    ),
+                                    CountryListTile(
+                                        countryFlagUrl:
+                                        'assets/UnitedKingdom.svg',
+                                        countryName: 'United Kingdom',
+                                        countryNameShort: 'UK'),
+                                    SizedBox(
+                                      height: 8.h,
+                                    ),
+                                    CountryListTile(
+                                        countryFlagUrl:
+                                        'assets/Singapore.svg',
+                                        countryName: 'Singapore',
+                                        countryNameShort: 'SG'),
+                                    SizedBox(
+                                      height: 8.h,
+                                    ),
+                                    CountryListTile(
+                                        countryFlagUrl: 'assets/China.svg',
+                                        countryName: 'China',
+                                        countryNameShort: 'CN'),
+                                    SizedBox(
+                                      height: 8.h,
+                                    ),
+                                    CountryListTile(
+                                        countryFlagUrl:
+                                        'assets/Netherlands.svg',
+                                        countryName: 'Netherland',
+                                        countryNameShort: 'NL'),
+                                    SizedBox(
+                                      height: 8.h,
+                                    ),
+                                    CountryListTile(
+                                        countryFlagUrl:
+                                        'assets/Indonesia.svg',
+                                        countryName: 'Indonesia',
+                                        countryNameShort: 'ID'),
+                                  ],
                                 ),
-                              ));
+                              ),
+                            ),
+                          ));
                     },
                     readOnly: true,
                     controller: ref.watch(countryControllerProvider),
@@ -293,15 +323,25 @@ class UserInfo extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: 16.h),
+                  // New Password text field
                   AppTextField(
+                    onChanged: (password) {
+                      ref.read(enableButtonProvider.notifier).state =
+                          ref.watch(fullNameControllerProvider).text.isNotEmpty &&
+                              ref
+                                  .watch(userNameControllerProvider)
+                                  .text
+                                  .isNotEmpty &&
+                              password.isNotEmpty;
+                    },
                     controller: ref.read(passwordControllerProvider),
                     hintText: 'New Password',
                     keyboardType: TextInputType.emailAddress,
                     obscureText: ref.watch(obscureTextProvider),
                     suffixIcon: GestureDetector(
                       onTap: () =>
-                          ref.read(obscureTextProvider.notifier).state =
-                              !ref.read(obscureTextProvider.notifier).state,
+                      ref.read(obscureTextProvider.notifier).state =
+                      !ref.read(obscureTextProvider.notifier).state,
                       child: Padding(
                         padding: EdgeInsets.symmetric(
                             horizontal: 16.0.w, vertical: 16.h),
@@ -314,29 +354,28 @@ class UserInfo extends ConsumerWidget {
                   SizedBox(
                     height: 24.h,
                   ),
-                  AppButton(
+                  // Loading indicator andContinue button
+                  registerUserState.isLoading
+                      ? const Center(
+                      child: CircularProgressIndicator(
+                        color: buttonColor,
+                      ))
+                      : AppButton(
                       backgroundColor: ref.watch(enableButtonProvider)
                           ? buttonColor
                           : buttonColor.withOpacity(0.7),
                       text: 'Continue',
                       onPressed: () {
-                        ref.watch(enableButtonProvider)
-                            ? registerUser.when(data: (data) {
-                                print('Registration Success');
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) => SetPin()));
-                              }, error: (error, stackTrace) {
-                                Fluttertoast.showToast(
-                                    msg:
-                                        'Registration Error: ${error.toString()}');
-                                print('Registration Error: $error');
-                                print(stackTrace);
-                              }, loading: () {
-                                print('loading');
-                                print(ref
-                                    .watch(selectedCountryShortNameProvider));
-                                return CircularProgressIndicator();
-                              })
+                        // Check if all the fields are filled and register user when pressed
+                        ref.read(enableButtonProvider)
+                            ? ref
+                            .read(registerUserNotifierProvider.notifier)
+                            .signUpUser(
+                          ref.watch(fullNameControllerProvider).text,
+                          ref.watch(userNameControllerProvider).text,
+                          ref.watch(emailController).text,
+                          ref.watch(passwordControllerProvider).text,
+                        )
                             : null;
                       },
                       width: 327)
@@ -350,71 +389,3 @@ class UserInfo extends ConsumerWidget {
   }
 }
 
-class CountryListTile extends ConsumerWidget {
-  CountryListTile({
-    required this.countryFlagUrl,
-    required this.countryName,
-    required this.countryNameShort,
-    super.key,
-  });
-
-  String countryName;
-  String countryNameShort;
-  String countryFlagUrl;
-
-  @override
-  Widget build(BuildContext context, ref) {
-    final selectedCountry = ref.watch(selectedCountryProvider);
-
-    return GestureDetector(
-      onTap: () {
-        ref.read(selectedCountryProvider.notifier).state = countryNameShort;
-        ref.read(selectedCountryNameProvider.notifier).state = countryName;
-        ref.read(selectedCountryFlagProvider.notifier).state = countryFlagUrl;
-        ref.read(selectedCountryShortNameProvider.notifier).state =
-            countryNameShort;
-        Navigator.pop(context);
-      },
-      child: Container(
-        height: 64.h,
-        width: 327.w,
-        decoration: BoxDecoration(
-          color: textFieldColor,
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  SvgPicture.asset(countryFlagUrl),
-                  SizedBox(
-                    width: 16.w,
-                  ),
-                  Text(
-                    countryNameShort,
-                    style: Theme.of(context)
-                        .textTheme
-                        .displayMedium!
-                        .copyWith(fontWeight: FontWeight.w500, color: darkGrey),
-                  ),
-                  SizedBox(
-                    width: 16.w,
-                  ),
-                  Text(countryName,
-                      style: Theme.of(context)
-                          .textTheme
-                          .displayMedium!
-                          .copyWith(color: buttonColor)),
-                ],
-              ),
-              if (selectedCountry == countryNameShort)
-                SvgPicture.asset('assets/countrycheck.svg'),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -16,7 +16,8 @@ class AppTextField extends ConsumerWidget {
     this.readOnly = false,
     this.onTap,
     this.prefixIcon,
-    this.showCursor = true
+    this.showCursor = true,
+    this.onChanged
   });
 
   final TextEditingController controller;
@@ -28,6 +29,8 @@ class AppTextField extends ConsumerWidget {
   bool readOnly;
   Function()? onTap;
   bool showCursor;
+  Function(String)? onChanged;
+
 
   // GlobalKey<FormState> formKey;
 
@@ -51,10 +54,7 @@ class AppTextField extends ConsumerWidget {
         },
         showCursor: showCursor,
         cursorColor: buttonColor,
-        onChanged: (value) {
-          if (value.isNotEmpty) {
-          } else {}
-        },
+        onChanged: onChanged,
         keyboardType: keyboardType,
         autovalidateMode: AutovalidateMode.onUserInteraction,
         controller: controller,

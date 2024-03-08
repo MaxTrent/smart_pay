@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:smart_pay/data/api_services.dart';
 import 'package:smart_pay/models/models.dart';
 import 'package:smart_pay/screens/screens.dart';
@@ -12,10 +10,8 @@ import '../app_theme.dart';
 import '../main.dart';
 import '../widgets/widgets.dart';
 
-
 final emailController =
-Provider<TextEditingController>((ref) => TextEditingController());
-
+    Provider.autoDispose<TextEditingController>((ref) => TextEditingController());
 
 class SignUpState {
   final bool isLoading;
@@ -29,7 +25,8 @@ class SignUpNotifier extends StateNotifier<SignUpState> {
   final ApiService apiService;
   final VoidCallback onSuccess;
 
-  SignUpNotifier(this.apiService, this.onSuccess) : super(SignUpState(isLoading: false));
+  SignUpNotifier(this.apiService, this.onSuccess)
+      : super(SignUpState(isLoading: false));
 
   Future<void> signUp(String email) async {
     try {
@@ -43,23 +40,29 @@ class SignUpNotifier extends StateNotifier<SignUpState> {
   }
 }
 
-final signUpNotifierProvider = StateNotifierProvider<SignUpNotifier, SignUpState>((ref) {
+// Riverpod state provider for SignUpNotifier
+final signUpNotifierProvider =
+StateNotifierProvider<SignUpNotifier, SignUpState>((ref) {
   final apiService = ref.read(apiServiceProvider);
   final navigatorKey = ref.read(navigatorKeyProvider);
-  return SignUpNotifier(apiService,  () {
-    //Navigates to verifyscreen when successful
-    navigatorKey.currentState?.push(MaterialPageRoute(builder: (context) => VerifySignUp()));
-  },);
+  return SignUpNotifier(
+    apiService,
+        () {
+      // Navigates to VerifySignUp screen when successful
+      navigatorKey.currentState
+          ?.push(MaterialPageRoute(builder: (context) => VerifySignUp()));
+    },
+  );
 });
 
 class SignUp extends ConsumerWidget {
   SignUp({super.key});
 
-
-
   @override
   Widget build(BuildContext context, ref) {
+    // Get the current state of SignUpNotifier
     final signUpState = ref.watch(signUpNotifierProvider);
+
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
@@ -97,25 +100,18 @@ class SignUp extends ConsumerWidget {
                   SizedBox(height: 30.h),
                   Text.rich(TextSpan(
                       text: 'Create a ',
-                      style: Theme
-                          .of(context)
-                          .textTheme
-                          .displayLarge,
+                      style: Theme.of(context).textTheme.displayLarge,
                       children: [
                         TextSpan(
                           text: 'Smartpay',
-                          style: Theme
-                              .of(context)
+                          style: Theme.of(context)
                               .textTheme
                               .displayLarge!
                               .copyWith(color: darkGreen),
                         ),
                         TextSpan(
                           text: '\naccount',
-                          style: Theme
-                              .of(context)
-                              .textTheme
-                              .displayLarge,
+                          style: Theme.of(context).textTheme.displayLarge,
                         ),
                       ])),
                   SizedBox(height: 32.h),
@@ -128,19 +124,29 @@ class SignUp extends ConsumerWidget {
                     height: 24.h,
                   ),
                   Center(
-
-                      child: signUpState.isLoading ? const CircularProgressIndicator(color: buttonColor,): AppButton(
-                        text: 'Sign Up',
-                        onPressed: () async {
-                          final email = ref.watch(emailController).text;
-                          ref.read(signUpNotifierProvider.notifier).signUp(email);
-
-                        },
-                        width: 327,
-                      )),
+                    child: signUpState.isLoading
+                        ? AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: signUpState.isLoading ? 1.0 : 0.0,
+                      child: const CircularProgressIndicator(
+                        color: buttonColor,
+                      ),
+                    )
+                        : AppButton(
+                      text: 'Sign Up',
+                      onPressed: () async {
+                        final email = ref.watch(emailController).text;
+                        ref
+                            .read(signUpNotifierProvider.notifier)
+                            .signUp(email);
+                      },
+                      width: 327,
+                    ),
+                  ),
                   SizedBox(
                     height: 32.h,
                   ),
+                  // Auth alternatives (e.g., social media sign-up)
                   AuthAlternative(),
                   SizedBox(
                     height: 117.h,
@@ -148,28 +154,31 @@ class SignUp extends ConsumerWidget {
                   Center(
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => SignIn()));
+                        Navigator.of(context).push(MaterialPageRoute(
+                            settings: const RouteSettings(name: "SignIn"),
+                            builder: (context) => SignIn()));
                       },
-                      child: Text.rich(TextSpan(
+                      child: Text.rich(
+                        TextSpan(
                           text: 'Already have an account? ',
-                          style: Theme
-                              .of(context)
+                          style: Theme.of(context)
                               .textTheme
                               .displayMedium!
                               .copyWith(
                               fontWeight: FontWeight.w400, color: darkGrey),
                           children: [
                             TextSpan(
-                                text: 'Sign In',
-                                style: Theme
-                                    .of(context)
-                                    .textTheme
-                                    .displayMedium!
-                                    .copyWith(color: darkGreen))
-                          ])),
+                              text: 'Sign In',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .displayMedium!
+                                  .copyWith(color: darkGreen),
+                            )
+                          ],
+                        ),
+                      ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),

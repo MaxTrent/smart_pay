@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:smart_pay/app_theme.dart';
 import 'package:smart_pay/screens/screens.dart';
 
-
 final navigatorKeyProvider = Provider<GlobalKey<NavigatorState>>((ref) {
   return GlobalKey<NavigatorState>();
 });
 
-void main() {
+Future main() async{
+  await dotenv.load(fileName: ".env");
   runApp(ProviderScope(
     child: MyApp(
       appTheme: AppTheme(),

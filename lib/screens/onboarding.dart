@@ -9,6 +9,7 @@ import 'package:smart_pay/app_theme.dart';
 import 'package:smart_pay/screens/screens.dart';
 import 'package:smart_pay/screens/sign_in.dart';
 
+import '../data/app_storage.dart';
 import '../widgets/widgets.dart';
 
 final currentIndex = StateProvider<int>((ref) => 0);
@@ -19,17 +20,18 @@ class Onboarding extends ConsumerWidget {
 
   final _controller = PageController();
   final List<OnboardingPage> _pages = [
+    // Define the onboarding pages with text, image, and subtext.
     OnboardingPage(
       text: 'Finance app the safest\nand most trusted',
       imageUrl: 'assets/onboarding1.png',
       subtext:
-          'Your finance work starts here. Our here to help\nyou track and deal with speeding up your\ntransactions.',
+      'Your finance work starts here. Our here to help\nyou track and deal with speeding up your\ntransactions.',
     ),
     OnboardingPage(
       text: 'The fastest transaction\nprocess only here',
       imageUrl: 'assets/onboarding2.png',
       subtext:
-          'Get easy to pay all your bills with just a few\nsteps. Paying your bills become fast and\nefficient.',
+      'Get easy to pay all your bills with just a few\nsteps. Paying your bills become fast and\nefficient.',
     ),
   ];
 
@@ -40,6 +42,18 @@ class Onboarding extends ConsumerWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
+            // PageView to display onboarding pages.
+            PageView(
+              onPageChanged: (index) {
+                // Update the current index when the page changes.
+                ref.read(currentIndex.notifier).state = index;
+              },
+              allowImplicitScrolling: true,
+              physics: AlwaysScrollableScrollPhysics(),
+              scrollDirection: Axis.horizontal,
+              controller: _controller,
+              children: _pages.map((page) => AppOnboarding(pageInfo: page)).toList(),
+            ),
             Column(
               children: [
                 SizedBox(
@@ -50,8 +64,7 @@ class Onboarding extends ConsumerWidget {
                   child: Align(
                     alignment: Alignment.topRight,
                     child: GestureDetector(
-
-                      onTap: ()=>Navigator.of(context).push(MaterialPageRoute(builder: (context)=> SignIn())),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => SignUp())),
                       child: Text(
                         'Skip',
                         style: Theme.of(context)
@@ -67,25 +80,15 @@ class Onboarding extends ConsumerWidget {
                 ),
               ],
             ),
-            PageView(
-              onPageChanged: (index) {
-                ref.read(currentIndex.notifier).state = index;
-              },
-              allowImplicitScrolling: true,
-              physics: AlwaysScrollableScrollPhysics(),
-              scrollDirection: Axis.horizontal,
-              controller: _controller,
-              children:
-                  _pages.map((page) => AppOnboarding(pageInfo: page)).toList(),
-            ),
             Positioned(
               bottom: 24.h,
               child: Column(
                 children: [
+                  // Display indicators for each onboarding page.
                   Row(
                     children: List.generate(
                       _pages.length,
-                      (index) => OnboardingIndicator(
+                          (index) => OnboardingIndicator(
                         positionIndex: index,
                         currentIndex: currentIndex,
                       ),
@@ -94,7 +97,15 @@ class Onboarding extends ConsumerWidget {
                   SizedBox(
                     height: 34.h,
                   ),
-                  AppButton(text: 'Get Started', onPressed: () { Navigator.of(context).push(MaterialPageRoute(builder: (context)=> SignUp())); }, width: 287,),
+                  // Button to proceed after completing onboarding.
+                  AppButton(
+                    text: 'Get Started',
+                    onPressed: () async {
+                      await SharedPreferencesHelper.setOnboardingCompleted();
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => SignUp()));
+                    },
+                    width: 287,
+                  ),
                 ],
               ),
             )
@@ -104,6 +115,7 @@ class Onboarding extends ConsumerWidget {
     );
   }
 }
+
 
 
 
@@ -124,8 +136,8 @@ class AppOnboarding extends StatelessWidget {
             height: 131.h,
           ),
           Stack(
-            clipBehavior: Clip.none,
-            alignment: Alignment.center,
+            clipBehavior: Clip.none, // Allow content to be drawn outside its box.
+            alignment: Alignment.center, // Align content in the center.
             children: [
               Container(
                 foregroundDecoration: BoxDecoration(
@@ -135,7 +147,6 @@ class AppOnboarding extends StatelessWidget {
                     colors: [
                       Colors.white.withOpacity(0),
                       Colors.white,
-                      // Colors.white,
                     ],
                     stops: [0.58, 0.61],
                   ),
@@ -147,31 +158,29 @@ class AppOnboarding extends StatelessWidget {
                 ),
               ),
               Positioned(
-                  top: 300.h,
-                  child: Column(
-                    children: [
-                      Text(
-                        pageInfo.text,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.displayLarge,
-                      ),
-                      SizedBox(
-                        height: 16.h,
-                      ),
-                      Text(
-                        pageInfo.subtext,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.displaySmall,
-                      ),
-                      SizedBox(
-                        height: 16.h,
-                      ),
-                    ],
-                  )),
+                top: 300.h, // Position the text content below the top.
+                child: Column(
+                  children: [
+                    Text(
+                      pageInfo.text,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.displayLarge,   ),
+                    SizedBox(
+                      height: 16.h,
+                    ),
+                    Text(
+                      pageInfo.subtext,
+                      textAlign: TextAlign.center, // Center-align the subtext.
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+                    SizedBox(
+                      height: 16.h,
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
-          // SizedBox(height: 46.h,),
-          // Text('Finance app the safest\nand most trusted',textAlign: TextAlign.center, style: Theme.of(context).textTheme.displayLarge,)
         ],
       ),
     );
@@ -180,6 +189,7 @@ class AppOnboarding extends StatelessWidget {
 
 
 
+// Data structure for the onboarding page, holding text, image URL, and subtext.
 class OnboardingPage {
   final String text;
   final String imageUrl;

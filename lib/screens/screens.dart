@@ -10,3 +10,4 @@ export 'signup_verify.dart';
 export 'user_info.dart';
 export 'set_pin.dart';
 export 'onboarding_success.dart';
+export 'dashboard.dart';
